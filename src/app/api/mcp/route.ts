@@ -1,4 +1,5 @@
-import { transport } from "@/lib/mcp";
+import { createMcpServer } from "@/lib/mcp";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 
 function patchRequest(req: Request): Request {
   const originalGet = req.headers.get.bind(req.headers);
@@ -9,9 +10,22 @@ function patchRequest(req: Request): Request {
   return req;
 }
 
+async function handle(req: Request) {
+  const server = createMcpServer();
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  });
+  
+  // We do NOT await connect since it returns a Promise that resolves when transport is closed.
+  server.connect(transport).catch(console.error);
+  
+  return await transport.handleRequest(patchRequest(req));
+}
+
 export async function GET(req: Request) {
   try {
-    return await transport.handleRequest(patchRequest(req));
+    return await handle(req);
   } catch (err: any) {
     return new Response(err.stack || err.message, { status: 500 });
   }
@@ -19,7 +33,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    return await transport.handleRequest(patchRequest(req));
+    return await handle(req);
   } catch (err: any) {
     return new Response(err.stack || err.message, { status: 500 });
   }
