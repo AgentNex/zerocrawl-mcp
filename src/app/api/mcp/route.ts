@@ -1,11 +1,28 @@
 import { transport } from "@/lib/mcp";
 
+function patchRequest(req: Request): Request {
+  const originalGet = req.headers.get.bind(req.headers);
+  req.headers.get = (name: string) => {
+    if (name.toLowerCase() === 'accept') return 'application/json, text/event-stream';
+    return originalGet(name);
+  };
+  return req;
+}
+
 export async function GET(req: Request) {
-  return await transport.handleRequest(req);
+  try {
+    return await transport.handleRequest(patchRequest(req));
+  } catch (err: any) {
+    return new Response(err.stack || err.message, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
-  return await transport.handleRequest(req);
+  try {
+    return await transport.handleRequest(patchRequest(req));
+  } catch (err: any) {
+    return new Response(err.stack || err.message, { status: 500 });
+  }
 }
 
 // Ensure Vercel uses Node.js runtime instead of Edge,
