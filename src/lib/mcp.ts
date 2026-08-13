@@ -115,7 +115,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Configure transport for Next.js Edge/Serverless environments
 export const transport = new WebStandardStreamableHTTPServerTransport({
-  sessionIdGenerator: () => Math.random().toString(36).substring(2),
+  sessionIdGenerator: undefined,
+  enableJsonResponse: true,
 });
 
 // Connect transport to server
