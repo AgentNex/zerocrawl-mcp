@@ -1,5 +1,5 @@
 {
-  "name": "mcp-web-crawler",
+  "name": "zerocrawl",
   "version": "0.1.0",
   "private": true,
   "scripts": {

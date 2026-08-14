@@ -31,10 +31,8 @@ In your MCP client configuration (e.g., `mcp.json` or `.claude_code/config.json`
 ```json
 {
   "mcpServers": {
-    "vercel-web-crawler": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/client", "--url", "https://<your-vercel-domain>.vercel.app/api/mcp"],
-      "env": {}
+    "zerocrawl": {
+      "serverUrl": "https://mcp-web-crawler.vercel.app/api/mcp"
     }
   }
 }
