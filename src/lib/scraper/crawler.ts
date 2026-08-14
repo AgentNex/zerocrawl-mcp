@@ -66,35 +66,43 @@ export async function crawl_domain(startUrl: string, maxPages = 5, maxDepth = 2)
 }
 
 /**
+ * Resolve a Google News redirect URL to the actual article URL.
+ * Google News RSS <link> elements are redirect URLs; fetch follows them automatically.
+ */
+async function resolveGoogleNewsUrl(redirectUrl: string): Promise<string> {
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(redirectUrl, {
+      method: "HEAD",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+    });
+    clearTimeout(id);
+    // res.url is the final URL after all redirects
+    if (res.url && res.url.startsWith("http") && !res.url.includes("news.google.com")) {
+      return res.url;
+    }
+  } catch {
+    // Return original if redirect resolution fails
+  }
+  return redirectUrl;
+}
+
+/**
  * Fetch search result links using sources confirmed to work from Vercel server IPs.
- * Strategy 1: Google News RSS  — free, no API key, not IP-blocked
- * Strategy 2: Bing News RSS    — free, no API key, not IP-blocked
- * Strategy 3: HackerNews Algolia API — free JSON API, no auth needed
+ * Strategy 1: Bing News RSS     — free, direct article URLs, no IP-block
+ * Strategy 2: HackerNews Algolia API — free JSON API, no auth, direct URLs
+ * Strategy 3: Google News RSS   — free, but requires redirect resolution
  */
 async function fetchSearchLinks(query: string, count: number): Promise<string[]> {
   const xmlParser = new XMLParser({ ignoreAttributes: false });
 
-  // --- Strategy 1: Google News RSS ---
-  try {
-    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-    const { html, status } = await fetchWithTimeout(url, 6000);
-    if (status === 200 && html) {
-      const parsed = xmlParser.parse(html);
-      const rawItems = parsed?.rss?.channel?.item ?? [];
-      const items: Array<{ link?: string; guid?: string }> = Array.isArray(rawItems)
-        ? rawItems
-        : [rawItems];
-      const links = items
-        .slice(0, count)
-        .map((item) => item.link || item.guid)
-        .filter((u): u is string => typeof u === "string" && u.startsWith("http"));
-      if (links.length > 0) return links;
-    }
-  } catch {
-    // Fall through
-  }
-
-  // --- Strategy 2: Bing News RSS ---
+  // --- Strategy 1: Bing News RSS (direct article URLs) ---
   try {
     const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=RSS`;
     const { html, status } = await fetchWithTimeout(url, 6000);
@@ -112,7 +120,7 @@ async function fetchSearchLinks(query: string, count: number): Promise<string[]>
     // Fall through
   }
 
-  // --- Strategy 3: HackerNews Algolia API ---
+  // --- Strategy 2: HackerNews Algolia API (great for tech topics) ---
   try {
     const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&hitsPerPage=${count * 2}&tags=story`;
     const { html, status } = await fetchWithTimeout(url, 6000);
@@ -123,6 +131,32 @@ async function fetchSearchLinks(query: string, count: number): Promise<string[]>
         .filter((u: unknown): u is string => typeof u === "string" && u.startsWith("http"))
         .slice(0, count);
       if (links.length > 0) return links;
+    }
+  } catch {
+    // Fall through
+  }
+
+  // --- Strategy 3: Google News RSS with redirect resolution ---
+  try {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+    const { html, status } = await fetchWithTimeout(url, 6000);
+    if (status === 200 && html) {
+      const parsed = xmlParser.parse(html);
+      const rawItems = parsed?.rss?.channel?.item ?? [];
+      const items: Array<{ link?: string; guid?: string }> = Array.isArray(rawItems)
+        ? rawItems
+        : [rawItems];
+      const redirectLinks = items
+        .slice(0, count)
+        .map((item) => item.link || item.guid)
+        .filter((u): u is string => typeof u === "string" && u.startsWith("http"));
+
+      if (redirectLinks.length > 0) {
+        // Resolve Google News redirect URLs to get actual article URLs
+        const resolved = await Promise.all(redirectLinks.map(resolveGoogleNewsUrl));
+        const directLinks = resolved.filter((u) => u.startsWith("http"));
+        if (directLinks.length > 0) return directLinks;
+      }
     }
   } catch {
     // Fall through
