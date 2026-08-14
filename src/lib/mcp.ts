@@ -14,7 +14,7 @@ import {
 export function createMcpServer() {
   const server = new Server(
     {
-      name: "vercel-mcp-web-crawler",
+      name: "ZeroCrawl",
       version: "1.1.0",
     },
     {
