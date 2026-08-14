@@ -3,6 +3,7 @@ import { Readability } from "@mozilla/readability";
 import TurndownService from "turndown";
 import pLimit from "p-limit";
 import * as cheerio from "cheerio";
+import { XMLParser } from "fast-xml-parser";
 import { fetchWithTimeout, scrape_page } from "./engine";
 
 const turndownService = new TurndownService();
@@ -65,81 +66,62 @@ export async function crawl_domain(startUrl: string, maxPages = 5, maxDepth = 2)
 }
 
 /**
- * Fetch search result links using a multi-strategy approach.
- * Strategy 1: Public SearXNG instances (JSON API) — free, no API key
- * Strategy 2: DuckDuckGo Lite HTML — different endpoint, lighter bot protection
- * Strategy 3: Bing HTML link extraction — fallback
+ * Fetch search result links using sources confirmed to work from Vercel server IPs.
+ * Strategy 1: Google News RSS  — free, no API key, not IP-blocked
+ * Strategy 2: Bing News RSS    — free, no API key, not IP-blocked
+ * Strategy 3: HackerNews Algolia API — free JSON API, no auth needed
  */
 async function fetchSearchLinks(query: string, count: number): Promise<string[]> {
-  // --- Strategy 1: SearXNG public instances (JSON API) ---
-  const searxngInstances = [
-    "https://searx.be",
-    "https://paulgo.io",
-    "https://searx.tiekoetter.com",
-    "https://search.disroot.org",
-  ];
+  const xmlParser = new XMLParser({ ignoreAttributes: false });
 
-  for (const instance of searxngInstances) {
-    try {
-      const url = `${instance}/search?q=${encodeURIComponent(query)}&format=json&categories=general&language=en`;
-      const { html, status } = await fetchWithTimeout(url, 6000);
-      if (status === 200 && html) {
-        const data = JSON.parse(html);
-        if (Array.isArray(data.results) && data.results.length > 0) {
-          const links = data.results
-            .slice(0, count)
-            .map((r: { url?: string }) => r.url)
-            .filter((u: unknown): u is string => typeof u === "string" && u.startsWith("http"));
-          if (links.length > 0) return links;
-        }
-      }
-    } catch {
-      // Try next instance
-    }
-  }
-
-  // --- Strategy 2: DuckDuckGo Lite ---
+  // --- Strategy 1: Google News RSS ---
   try {
-    const duckUrl = `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`;
-    const { html, status } = await fetchWithTimeout(duckUrl, 6000);
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+    const { html, status } = await fetchWithTimeout(url, 6000);
     if (status === 200 && html) {
-      const $ = cheerio.load(html);
-      const links: string[] = [];
-      // DDG lite: result links are in <a class="result-link"> elements
-      $("a.result-link, a[href*='//']:not([href*='duckduckgo.com'])").each((_, el) => {
-        if (links.length >= count) return false;
-        const href = $(el).attr("href");
-        if (href && href.startsWith("http") && !href.includes("duckduckgo.com")) {
-          links.push(href);
-        }
-      });
+      const parsed = xmlParser.parse(html);
+      const rawItems = parsed?.rss?.channel?.item ?? [];
+      const items: Array<{ link?: string; guid?: string }> = Array.isArray(rawItems)
+        ? rawItems
+        : [rawItems];
+      const links = items
+        .slice(0, count)
+        .map((item) => item.link || item.guid)
+        .filter((u): u is string => typeof u === "string" && u.startsWith("http"));
       if (links.length > 0) return links;
     }
   } catch {
     // Fall through
   }
 
-  // --- Strategy 3: Bing HTML ---
+  // --- Strategy 2: Bing News RSS ---
   try {
-    const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}&setlang=en`;
-    const { html, status } = await fetchWithTimeout(bingUrl, 6000);
+    const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=RSS`;
+    const { html, status } = await fetchWithTimeout(url, 6000);
     if (status === 200 && html) {
-      const $ = cheerio.load(html);
-      const links: string[] = [];
-      // Bing result links sit inside <h2><a href="...">
-      $("h2 a[href], li.b_algo a[href]").each((_, el) => {
-        if (links.length >= count) return false;
-        const href = $(el).attr("href");
-        if (
-          href &&
-          href.startsWith("http") &&
-          !href.includes("bing.com") &&
-          !href.includes("microsoft.com") &&
-          !href.includes("msn.com")
-        ) {
-          links.push(href);
-        }
-      });
+      const parsed = xmlParser.parse(html);
+      const rawItems = parsed?.rss?.channel?.item ?? [];
+      const items: Array<{ link?: string }> = Array.isArray(rawItems) ? rawItems : [rawItems];
+      const links = items
+        .slice(0, count)
+        .map((item) => item.link)
+        .filter((u): u is string => typeof u === "string" && u.startsWith("http"));
+      if (links.length > 0) return links;
+    }
+  } catch {
+    // Fall through
+  }
+
+  // --- Strategy 3: HackerNews Algolia API ---
+  try {
+    const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&hitsPerPage=${count * 2}&tags=story`;
+    const { html, status } = await fetchWithTimeout(url, 6000);
+    if (status === 200 && html) {
+      const data = JSON.parse(html);
+      const links = (data.hits ?? [])
+        .map((hit: { url?: string }) => hit.url)
+        .filter((u: unknown): u is string => typeof u === "string" && u.startsWith("http"))
+        .slice(0, count);
       if (links.length > 0) return links;
     }
   } catch {
