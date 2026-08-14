@@ -1,13 +1,21 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { scrape_page, extract_metadata, crawl_domain, search_and_crawl } from "./scraper";
+import { 
+  scrape_page, 
+  extract_metadata, 
+  crawl_domain, 
+  search_and_crawl,
+  parse_sitemap,
+  get_screenshot_and_media,
+  batch_scrape
+} from "./scraper";
 
 export function createMcpServer() {
   const server = new Server(
     {
       name: "vercel-mcp-web-crawler",
-      version: "1.0.0",
+      version: "1.1.0",
     },
     {
       capabilities: {
@@ -67,6 +75,43 @@ export function createMcpServer() {
             required: ["query"],
           },
         },
+        {
+          name: "parse_sitemap",
+          description: "Discover and parse sitemap.xml or sitemap_index.xml for a given domain.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              domainUrl: { type: "string", description: "The base URL or domain to check for sitemaps" },
+            },
+            required: ["domainUrl"],
+          },
+        },
+        {
+          name: "get_screenshot_and_media",
+          description: "Return high-res screenshot URL via Microlink and extract all embedded page image links.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              url: { type: "string", description: "URL to capture" },
+            },
+            required: ["url"],
+          },
+        },
+        {
+          name: "batch_scrape",
+          description: "Accept an array of up to 5 URLs, executing page processing concurrently.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              urls: { 
+                type: "array", 
+                items: { type: "string" },
+                description: "Array of URLs to scrape"
+              },
+            },
+            required: ["urls"],
+          },
+        }
       ],
     };
   });
@@ -89,6 +134,15 @@ export function createMcpServer() {
       } else if (name === "search_and_crawl") {
         const { query, limit } = args as { query: string; limit?: number };
         result = await search_and_crawl(query, limit);
+      } else if (name === "parse_sitemap") {
+        const { domainUrl } = args as { domainUrl: string };
+        result = await parse_sitemap(domainUrl);
+      } else if (name === "get_screenshot_and_media") {
+        const { url } = args as { url: string };
+        result = await get_screenshot_and_media(url);
+      } else if (name === "batch_scrape") {
+        const { urls } = args as { urls: string[] };
+        result = await batch_scrape(urls);
       } else {
         throw new Error(`Unknown tool: ${name}`);
       }

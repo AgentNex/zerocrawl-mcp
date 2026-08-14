@@ -12,6 +12,7 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@mozilla/readability": "^0.6.0",
     "cheerio": "^1.2.0",
+    "fast-xml-parser": "^5.10.1",
     "linkedom": "^0.18.13",
     "next": "^16.2.10",
     "p-limit": "^7.3.1",
