@@ -96,10 +96,21 @@ ZeroCrawl is built from the ground up to operate within the constraints of Verce
 
 ---
 
-## 🤝 Contributing & Star History
-Contributions are welcome! If you find this open source web scraper MCP helpful, please leave a star.
+## 🤖 1-Click AI Agent Setup Prompt
 
-[![Star History Chart](https://api.star-history.com/svg?repos=AgentNex/zerocrawl-mcp&type=Date)](https://star-history.com/#AgentNex/zerocrawl-mcp&Date)
+Don't want to configure this manually? Copy and paste the prompt below directly into your AI coding assistant (like Cursor, Windsurf, or Google Antigravity) and it will autonomously install, configure, and deploy ZeroCrawl MCP to your Vercel account!
+
+```text
+Please install, configure, and deploy the ZeroCrawl MCP Server to my Vercel account. 
+
+Execute these exact steps sequentially:
+1. Run `git clone https://github.com/AgentNex/zerocrawl-mcp.git` and `cd zerocrawl-mcp`.
+2. Run `npm install` to install all necessary packages.
+3. Copy `.env.example` to `.env` and generate a secure random string for `AUTH_TOKEN`.
+4. Run `npx vercel link --yes` to link the project to my Vercel account.
+5. Deploy the project to production by running `npx vercel deploy --prod`.
+6. Once successfully deployed, please configure my local MCP settings (in Claude Desktop or Cursor) to point to the new Vercel production URL at the `/api/mcp` endpoint using the `AUTH_TOKEN` you generated.
+```
 
 ---
 
