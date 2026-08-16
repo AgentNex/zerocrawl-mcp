@@ -1,7 +1,29 @@
 {
-  "name": "zerocrawl",
-  "version": "0.1.0",
+  "name": "zerocrawl-mcp",
+  "version": "1.0.0",
+  "description": "Production-ready, zero-cost web crawling and scraping MCP server optimized for Vercel Serverless.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "crawler",
+    "web-scraping",
+    "firecrawl-alternative",
+    "vercel",
+    "nextjs",
+    "cursor-mcp",
+    "claude-mcp",
+    "turndown",
+    "cheerio"
+  ],
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/zerocrawl-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/zerocrawl-mcp/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/zerocrawl-mcp#readme",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,10 +36,10 @@
     "cheerio": "^1.2.0",
     "fast-xml-parser": "^5.10.1",
     "linkedom": "^0.18.13",
-    "next": "^16.2.10",
+    "next": "^16.3.1",
     "p-limit": "^7.3.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "turndown": "^7.2.4",
     "zod": "^4.4.3"
   },
@@ -28,7 +50,7 @@
     "@types/react-dom": "^19",
     "@types/turndown": "^5.0.6",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "^16.3.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
