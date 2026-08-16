@@ -37,80 +37,35 @@ ZeroCrawl MCP is a **100% free forever** web crawling and scraping server design
 
 ---
 
-## 💻 Installation & Setup
+## <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Vercel_logo.svg" width="20" height="20" alt="Vercel" /> Installation & Setup
 
-### Claude Desktop (`claude_desktop_config.json`)
+We highly recommend utilizing our **1-Click Autonomous Agent Setup** to completely eliminate manual configuration.
 
-**Open Access:**
-```json
-{
-  "mcpServers": {
-    "zerocrawl": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-vercel", "https://your-deployment-url.vercel.app/api/mcp"]
-    }
-  }
-}
-```
+### <img src="https://img.shields.io/badge/AI_Agent_Setup-000000?style=for-the-badge&logo=openai&logoColor=white" alt="AI Agent Setup" />
 
-**Authenticated (Bearer Token):**
-```json
-{
-  "mcpServers": {
-    "zerocrawl": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-vercel", "https://your-deployment-url.vercel.app/api/mcp"],
-      "env": {
-        "AUTH_TOKEN": "your-secret-token"
-      }
-    }
-  }
-}
-```
+Don't want to configure this manually? Copy and paste the prompt below directly into your AI coding assistant (like Cursor, Windsurf, or Google Antigravity). Your AI will autonomously install, configure, and deploy the ZeroCrawl MCP server for you!
 
-### Cursor IDE
-1. Open `.cursor/mcp.json` or Cursor Settings.
-2. Add a new SSE server:
-```json
-{
-  "mcpServers": {
-    "zerocrawl": {
-      "command": "https://your-deployment-url.vercel.app/api/mcp",
-      "type": "sse",
-      "env": {
-        "Authorization": "Bearer your-secret-token"
-      }
-    }
-  }
-}
-```
+> **Copy & Paste this into your AI Agent:**
+> ```text
+> Please install, configure, and deploy the ZeroCrawl MCP Server to my Vercel account. 
+> 
+> Execute these exact steps sequentially:
+> 1. Run `git clone https://github.com/AgentNex/zerocrawl-mcp.git` and `cd zerocrawl-mcp`.
+> 2. Run `npm install` to install all necessary packages.
+> 3. Copy `.env.example` to `.env` and generate a secure random string for `AUTH_TOKEN`.
+> 4. Run `npx vercel link --yes` to link the project to my Vercel account.
+> 5. Deploy the project to production by running `npx vercel deploy --prod`.
+> 6. Once successfully deployed, please configure my local MCP settings (in Claude Desktop or Cursor) to point to the new Vercel production URL at the `/api/mcp` endpoint using the `AUTH_TOKEN` you generated.
+> ```
 
 ---
 
-## 🏗 Architecture & Performance Breakdown
+## <img src="https://img.shields.io/badge/Architecture-1E293B?style=for-the-badge&logo=amazonaws&logoColor=white" alt="Architecture" /> Performance Breakdown
 
 ZeroCrawl is built from the ground up to operate within the constraints of Vercel's Free Tier:
 - **Sub-9s Timeout Safeguards:** Operations automatically gracefully downgrade or return partial data to prevent serverless timeouts.
 - **In-Memory TTL Caching Layer:** Eliminates redundant fetching and scraping by returning instant responses for recent queries within a 10-minute window.
 - **Zero-Chromium Architecture:** Bypasses the need for heavy headless browsers. It leverages smart HTTP fetchers, DOM cleanup with Mozilla's Readability, and Turndown for clean Markdown generation. For complex SPAs or blocks, it automatically falls back to Jina Reader APIs.
-
----
-
-## 🤖 1-Click AI Agent Setup Prompt
-
-Don't want to configure this manually? Copy and paste the prompt below directly into your AI coding assistant (like Cursor, Windsurf, or Google Antigravity) and it will autonomously install, configure, and deploy ZeroCrawl MCP to your Vercel account!
-
-```text
-Please install, configure, and deploy the ZeroCrawl MCP Server to my Vercel account. 
-
-Execute these exact steps sequentially:
-1. Run `git clone https://github.com/AgentNex/zerocrawl-mcp.git` and `cd zerocrawl-mcp`.
-2. Run `npm install` to install all necessary packages.
-3. Copy `.env.example` to `.env` and generate a secure random string for `AUTH_TOKEN`.
-4. Run `npx vercel link --yes` to link the project to my Vercel account.
-5. Deploy the project to production by running `npx vercel deploy --prod`.
-6. Once successfully deployed, please configure my local MCP settings (in Claude Desktop or Cursor) to point to the new Vercel production URL at the `/api/mcp` endpoint using the `AUTH_TOKEN` you generated.
-```
 
 ---
 
