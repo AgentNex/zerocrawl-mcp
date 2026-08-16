@@ -1,0 +1,5 @@
+root:
+  name: "ZeroCrawl MCP"
+  description: "100% Free forever web scraping and crawling MCP server with zero external paid dependencies."
+  command: "node"
+  args: ["dist/index.js"]
